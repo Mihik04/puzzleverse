@@ -13,7 +13,7 @@ It allows users to:
 
 ## 🌐 Live Demo
 
-👉 https://your-vercel-link.vercel.app
+👉 https://puzzleverse-indol.vercel.app
 
 ---
 

@@ -55,7 +55,7 @@ Metrics compared:
 
 ## 🚀 Getting Started Locally
 
-```bash
+
 git clone https://github.com/Mihik04/puzzleverse.git
 cd puzzleverse
 npm install

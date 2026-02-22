@@ -53,16 +53,6 @@ Metrics compared:
 
 ---
 
-## 🚀 Getting Started Locally
-
-
-git clone https://github.com/Mihik04/puzzleverse.git
-cd puzzleverse
-npm install
-npm run dev
-
----
-
 ## 👨‍💻 Author
 
 Mihik Sarkar  

@@ -1,0 +1,1160 @@
+
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          background-color: #0f172a;
+        }
+
+        .puzzle-title {
+          font-family: 'DM Mono', monospace;
+          font-size: 13px;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: #475569;
+          margin-bottom: 48px;
+        }
+
+        .grid-wrapper {
+          position: relative;
+        }
+
+        .grid-wrapper.solved::before {
+          content: '';
+          position: absolute;
+          inset: -20px;
+          border-radius: 24px;
+          background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+          animation: solveGlow 1.5s ease-in-out infinite alternate;
+          pointer-events: none;
+        }
+
+        .grid-wrapper.solved::after {
+          content: '';
+          position: absolute;
+          inset: -20px;
+          border-radius: 24px;
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          
+          pointer-events: none;
+          animation: borderPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes solveGlow {
+          from { opacity: 0.6; }
+          to { opacity: 1; }
+        }
+
+        @keyframes borderPulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.8; }
+        }
+
+        .tile-btn {
+        width: 90px;
+        height: 90px;
+        font-family: 'DM Mono', monospace;
+        font-size: 22px;
+        font-weight: 500;
+        border: none;
+        border-radius: 12px;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                    box-shadow 0.2s ease,
+                    background-color 0.2s ease;
+        will-change: transform;
+        }
+
+        .tile-btn.active {
+          background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+          color: #bfdbfe;
+          cursor: pointer;
+          box-shadow: 0 4px 16px rgba(30, 64, 175, 0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .tile-btn.active:hover {
+          transform: translateY(-4px);
+          transform: scale(1.06);
+          box-shadow: 0 8px 24px rgba(30, 64, 175, 0.55), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .tile-btn.active:active {
+          transform: scale(0.97);
+        }
+
+        .tile-btn.empty {
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px dashed #1e293b;
+          cursor: default;
+          box-shadow: none;
+        }
+
+        .tile-btn.solved-state {
+          background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%);
+          color: #7dd3fc;
+          box-shadow: 0 4px 16px rgba(3, 105, 161, 0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .stats-row {
+          display: flex;
+          gap: 32px;
+          margin-top: 40px;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .stat-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .stat-label {
+          font-family: 'DM Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #334155;
+        }
+
+        .stat-value {
+          font-family: 'DM Mono', monospace;
+          font-size: 24px;
+          font-weight: 500;
+          color: #94a3b8;
+        }
+
+        .stat-divider {
+          width: 1px;
+          height: 32px;
+          background: #1e293b;
+        }
+
+        .shuffle-btn {
+          margin-top: 32px;
+          padding: 12px 32px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: 0.05em;
+          background: transparent;
+          color: #64748b;
+          border: 1px solid #1e293b;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .shuffle-btn:hover {
+          color: #e2e8f0;
+          border-color: #334155;
+          background: rgba(30, 41, 59, 0.5);
+        }
+
+        .shuffle-btn:active {
+          transform: scale(0.98);
+        }
+        .success-msg {
+        margin-top: 24px;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #38bdf8;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.3s ease;
+        height: 18px; /* reserve space */
+        }
+
+        .success-msg.visible {
+        opacity: 1;
+        transform: translateY(0);
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .puzzle-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 90px);
+          gap: 8px;
+        }
+        /* ---------- AI MODE ---------- */
+
+/* ============================================================
+   AI SOLVER — COLD LAB INTERFACE
+   Palette: #0f0f14 base | #00f5ff electric | #8b5cf6 violet
+   Font: IBM Plex Mono (display) + Syne (labels)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap');
+
+/* ---------- Reset & Root Variables ---------- */
+:root {
+  --bg:           #0f0f14;
+  --bg-panel:     rgba(255, 255, 255, 0.028);
+  --bg-panel-alt: rgba(0, 245, 255, 0.025);
+  --electric:     #00f5ff;
+  --violet:       #8b5cf6;
+  --violet-dim:   rgba(139, 92, 246, 0.18);
+  --electric-dim: rgba(0, 245, 255, 0.12);
+  --text-primary: #dde4ed;
+  --text-muted:   #4a5568;
+  --text-dim:     #2d3748;
+  --border:       rgba(255, 255, 255, 0.06);
+  --border-glow:  rgba(0, 245, 255, 0.18);
+  --border-violet: rgba(139, 92, 246, 0.25);
+  --font-mono:    'IBM Plex Mono', monospace;
+  --font-label:   'Syne', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+
+/* ---------- Scanline Texture ---------- */
+.ai-container::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- Corner Decoration ---------- */
+.ai-container::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
+.ai-container {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
+  padding: 0;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.ai-topbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.ai-wordmark {
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ai-topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+
+.ai-topbar-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--electric);
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+}
+
+.ai-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--electric);
+  box-shadow: 0 0 6px var(--electric);
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+.ai-status-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* Back button sits inside topbar */
+.ai-back-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.ai-back-btn:hover {
+  border-color: var(--electric);
+  color: var(--electric);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.15);
+}
+
+
+/* ============================================================
+   MAIN LAYOUT — asymmetric two-column
+   ============================================================ */
+.ai-main {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* ---- Left: Puzzle Canvas ---- */
+.ai-grid-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+
+/* Subtle corner crosshairs */
+.ai-grid-panel::before,
+.ai-grid-panel::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: rgba(0, 245, 255, 0.2);
+  border-style: solid;
+}
+.ai-grid-panel::before {
+  top: 24px; left: 24px;
+  border-width: 1px 0 0 1px;
+}
+.ai-grid-panel::after {
+  bottom: 24px; right: 24px;
+  border-width: 0 1px 1px 0;
+}
+
+.ai-grid-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+  align-self: flex-start;
+}
+
+.ai-grid-inner {
+  padding: 28px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 40px rgba(0, 245, 255, 0.04),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  backdrop-filter: blur(10px);
+  transition: box-shadow 0.4s ease;
+}
+
+.ai-grid-inner:has(.puzzle-grid) {
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 60px rgba(0, 245, 255, 0.07),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* ---- Right: Control Sidebar ---- */
+.ai-sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel-alt);
+  border-left: 1px solid var(--border);
+}
+
+.ai-sidebar-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-sidebar-title {
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--violet);
+}
+
+.ai-sidebar-body {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+
+
+/* ============================================================
+   AI CONTROL PANEL (inside sidebar)
+   ============================================================ */
+.ai-control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Section label */
+.ctrl-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+/* Algorithm selector group */
+.ctrl-algo-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ctrl-algo-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+
+.ctrl-algo-btn .algo-indicator {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+
+.ctrl-algo-btn:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: var(--text-primary);
+}
+
+.ctrl-algo-btn.active {
+  border-color: var(--violet);
+  color: var(--text-primary);
+  background: var(--violet-dim);
+}
+
+.ctrl-algo-btn.active .algo-indicator {
+  background: var(--violet);
+  border-color: var(--violet);
+  box-shadow: 0 0 6px var(--violet);
+}
+
+/* Speed control */
+.ctrl-speed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ctrl-speed-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--electric);
+}
+
+.ctrl-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ctrl-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--electric);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.ctrl-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 14px rgba(0, 245, 255, 0.8);
+}
+
+/* Divider */
+.ctrl-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* Action buttons */
+.ctrl-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ctrl-btn-primary {
+  padding: 11px 16px;
+  background: transparent;
+  border: 1px solid var(--electric);
+  color: var(--electric);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.ctrl-btn-primary:not(:disabled):hover {
+  background: rgba(0, 245, 255, 0.07);
+  box-shadow: 0 0 18px rgba(0, 245, 255, 0.2);
+}
+
+.ctrl-btn-primary:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+}
+
+/* Solving pulse effect */
+.ctrl-btn-primary.solving::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(0,245,255,0.08), transparent);
+  animation: sweep 1.6s linear infinite;
+}
+
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+.ctrl-btn-secondary {
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ctrl-btn-secondary:not(:disabled):hover {
+  border-color: rgba(139, 92, 246, 0.45);
+  color: var(--violet);
+}
+
+.ctrl-btn-secondary:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   METRICS STRIP — bottom
+   ============================================================ */
+.ai-metrics {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--border);
+}
+
+.metric-cell {
+  padding: 22px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.metric-cell + .metric-cell {
+  border-left: 1px solid var(--border);
+}
+
+.metric-cell:first-child {
+  border-left: none;
+}
+
+/* Accent bar on active metric */
+.metric-cell::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 40px;
+  width: 24px; height: 1px;
+  background: var(--electric);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.metric-cell.has-value::before {
+  opacity: 1;
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--electric);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.metric-value.zero {
+  color: var(--text-dim);
+}
+
+.metric-unit {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+
+/* ============================================================
+   PUZZLE GRID + TILE overrides for AI mode
+   ============================================================ */
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 88px);
+  gap: 7px;
+}
+
+/* Tile overrides specifically for AI mode */
+.ai-container .tile-btn {
+  width: 88px;
+  height: 88px;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 400;
+  border: none;
+  border-radius: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  letter-spacing: 0.05em;
+}
+
+.ai-container .tile-btn.active {
+  background: rgba(0, 245, 255, 0.055);
+  color: #a8d8e0;
+  cursor: default;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 1px 6px rgba(0,0,0,0.4);
+  border: 1px solid rgba(0, 245, 255, 0.12);
+}
+
+.ai-container .tile-btn.empty {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255,255,255,0.05);
+  cursor: default;
+}
+
+
+/* ============================================================
+   SOLVING INDICATOR in sidebar footer
+   ============================================================ */
+.ai-sidebar-footer {
+  padding: 16px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+}
+
+.solving-bar {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.solving-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--electric);
+  transform: translateX(-100%);
+  animation: bar-sweep 1.2s ease-in-out infinite;
+  box-shadow: 0 0 8px var(--electric);
+}
+
+@keyframes bar-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.solving-status-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--electric);
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.idle-status-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* ============================================================
+   PLAY MODE — Unified With AI System
+   ============================================================ */
+
+.play-container {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  position: relative;
+}
+
+/* Header (matches AI topbar aesthetic but simplified) */
+.play-header {
+  position: absolute;
+  top: 28px;
+  left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.play-wordmark {
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.play-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+
+.play-mode-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--electric);
+  opacity: 0.7;
+}
+
+/* Title */
+.puzzle-title {
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 48px;
+}
+
+/* Grid wrapper aligned with AI glass style */
+.play-grid-wrapper {
+  padding: 28px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 40px rgba(0, 245, 255, 0.04),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  backdrop-filter: blur(10px);
+  transition: box-shadow 0.4s ease;
+}
+
+.play-grid-wrapper:hover {
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 60px rgba(0, 245, 255, 0.08),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* AI navigation button styled in system */
+.play-ai-btn {
+  margin-top: 28px;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.play-ai-btn:hover {
+  border-color: var(--electric);
+  color: var(--electric);
+  box-shadow: 0 0 14px rgba(0, 245, 255, 0.15);
+}
+/* ============================================================
+   COMPARE PAGE
+   ============================================================ */
+
+.compare-container {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 80px 60px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.compare-header {
+  margin-bottom: 40px;
+}
+
+.compare-title {
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--violet);
+}
+
+.compare-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 50px;
+}
+
+.compare-btn-primary {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--electric);
+  color: var(--electric);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.compare-btn-primary:hover {
+  background: rgba(0,245,255,0.07);
+  box-shadow: 0 0 18px rgba(0,245,255,0.2);
+}
+
+.compare-btn-secondary {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.compare-btn-secondary:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.compare-card {
+  padding: 28px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 40px rgba(0, 245, 255, 0.04);
+}
+
+.compare-card-title {
+  margin-bottom: 16px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--electric);
+}
+.compare-graph-wrapper {
+  margin-top: 60px;
+  padding: 30px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 40px rgba(0, 245, 255, 0.04);
+}
+.graph-title {
+  margin-top: 40px;
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--electric);
+  text-transform: uppercase;
+}
+.compare-live-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-top: 60px;
+}
+
+.live-solver-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  text-align: center;
+}
+
+.live-metrics {
+  margin-top: 15px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.arena-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.solver-panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(0,255,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.solver-stats {
+  margin-top: 12px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+.live-solver {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(0,245,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: 0.3s ease;
+}
+
+.live-solver.winner {
+  border: 2px solid #00f5ff;
+  box-shadow: 0 0 25px rgba(0,245,255,0.4);
+}
+
+.live-title {
+  margin-bottom: 20px;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: #00f5ff;
+}
+
+.live-stats {
+  margin-top: 15px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+/* ============================================================
+   COMPARE PAGE ADDITIONS
+   Append this block to the existing puzzle.css
+   ============================================================ */
+
+/* Recharts overrides — make all text match lab font */
+.recharts-text,
+.recharts-legend-item-text {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace) !important;
+  font-size: 10px !important;
+  fill: var(--text-muted, #4a5568) !important;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: #4a5568 !important;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Recharts radar polygon fill softened */
+.recharts-radar-polygon {
+  opacity: 0.08 !important;
+}
+
+/* Smooth fade-in for analytics section */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.analytics-section {
+  animation: fadeUp 0.5s ease forwards;
+}
+
+/* Winner card glow pulse */
+@keyframes winnerGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(0,245,255,0.2); }
+  50%       { box-shadow: 0 0 50px rgba(0,245,255,0.35); }
+}
+
+.live-solver.winner {
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+
+/* Scrollbar for the whole compare page */
+.compare-container::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.compare-container::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.compare-container::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: rgba(0,245,255,0.15);
+  border-radius: 2px;
+}
+

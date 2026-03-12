@@ -93,7 +93,7 @@ export default function AISolvePage() {
           <span className="ai-status-label">
             {isSolving ? "running" : "ready"}
           </span>
-          <button className="ai-back-btn" onClick={() => navigate("/")}>
+          <button className="ai-back-btn" onClick={() => navigate("/play")}>
             ← Manual
           </button>
           {/*

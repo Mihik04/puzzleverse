@@ -378,7 +378,7 @@ export default function ComparePage() {
               <span className="cp-running-text">running</span>
             </div>
           )}
-          <button className="cp-back-btn" onClick={() => navigate("/")}>
+          <button className="cp-back-btn" onClick={() => navigate("/play")}>
             ← Manual
           </button>
         </div>

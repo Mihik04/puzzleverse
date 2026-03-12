@@ -53,8 +53,21 @@ Metrics compared:
 
 ---
 
+## 🚀 Getting Started Locally
+
+```bash
+git clone https://github.com/Mihik04/puzzleverse.git
+cd puzzleverse
+npm install
+npm run dev
+
+---
+
 ## 👨‍💻 Author
+```bash
 
 Mihik Sarkar  
 GitHub: https://github.com/Mihik04  
 LinkedIn: https://www.linkedin.com/in/mihik-sarkar-51b48b29a/
+
+---
